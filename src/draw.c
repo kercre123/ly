@@ -87,6 +87,9 @@ void draw_free(struct term_buf* buf)
 			case 1:
 				matrix_free(buf);
 				break;
+			case 2:
+				matrix_free(buf);
+				break;
 		}
 	}
 }
@@ -753,6 +756,11 @@ void animate_init(struct term_buf* buf)
 				matrix_init(buf);
 				break;
 			}
+			case 2:
+			{
+				matrix_init(buf);
+				break;
+			}
 		}
 	}
 }
@@ -946,6 +954,125 @@ static void matrix(struct term_buf* buf)
 	}
 }
 
+static void matrix_rainbow(struct term_buf* buf)
+{
+    static int frame = 3;
+    const int frame_delay = 8;
+    static int count = 0;
+    bool first_col;
+    struct matrix_state* s = buf->astate.matrix;
+    const int randmin = 33;
+    const int randnum = 123 - randmin;
+    const bool changes = true;
+  
+    if ((buf->width != buf->init_width) || (buf->height != buf->init_height))
+    {
+        return;
+    }
+
+    count += 1;
+    if (count > frame_delay) {
+        frame += 1;
+        if (frame > 4) frame = 1;
+        count = 0;
+
+        for (int j = 0; j < buf->width; j += 2)
+        {
+            int tail;
+            if (frame > s->updates[j])
+            {
+                if (s->grid[0][j].val == -1 && s->grid[1][j].val == ' ')
+                {
+                    if (s->spaces[j] > 0)
+                    {
+                        s->spaces[j]--;
+                    } else {
+                        s->length[j] = (int) rand() % (buf->height - 3) + 3;
+                        s->grid[0][j].val = (int) rand() % randnum + randmin;
+                        s->spaces[j] = (int) rand() % buf->height + 1;
+                    }
+                }
+
+                int i = 0, seg_len = 0;
+                first_col = 1;
+                while (i <= buf->height)
+                {
+                    while (i <= buf->height && (s->grid[i][j].val == ' ' || s->grid[i][j].val == -1))
+                    {
+                        i++;
+                    }
+
+                    if (i > buf->height) break;
+
+                    tail = i;
+                    seg_len = 0;
+                    while (i <= buf->height && (s->grid[i][j].val != ' ' && s->grid[i][j].val != -1))
+                    {
+                        s->grid[i][j].is_head = false;
+                        if (changes)
+                        {
+                            if (rand() % 8 == 0)
+                                s->grid[i][j].val = (int) rand() % randnum + randmin;
+                        }
+                        i++;
+                        seg_len++;
+                    }
+
+                    if (i > buf->height)
+                    {
+                        s->grid[tail][j].val = ' ';
+                        continue;
+                    }
+
+                    s->grid[i][j].val = (int) rand() % randnum + randmin;
+                    s->grid[i][j].is_head = true;
+
+                    if (seg_len > s->length[j] || !first_col) {
+                        s->grid[tail][j].val = ' ';
+                        s->grid[0][j].val = -1;
+                    }
+                    first_col = 0;
+                    i++;
+                }
+            }
+        }
+    }
+
+    uint32_t blank;
+    utf8_char_to_unicode(&blank, " ");
+
+    for (int j = 0; j < buf->width; j += 2) {
+        int fg_colors[] = {TB_RED, TB_YELLOW, TB_GREEN, TB_CYAN, TB_BLUE, TB_MAGENTA};
+        for (int i = 1; i <= buf->height; ++i)
+        {
+            uint32_t c;
+            int bg = TB_DEFAULT;
+            int fg = fg_colors[j % 6]; // reset the color for each row
+            
+            if (s->grid[i][j].val == -1 || s->grid[i][j].val == ' ')
+            {
+                tb_change_cell(j, i - 1, blank, fg, bg);
+                continue;
+            }
+
+            if (s->grid[i][j].is_head)
+            {
+                fg = TB_WHITE | TB_BOLD;
+            }
+
+            char tmp[2];
+            tmp[0] = s->grid[i][j].val;
+            tmp[1] = '\0';
+            if(utf8_char_to_unicode(&c, tmp))
+            {
+                tb_change_cell(j, i - 1, c, fg, bg);
+            }
+        }
+    }
+}
+
+
+
 void animate(struct term_buf* buf)
 {
 	buf->width = tb_width();
@@ -963,6 +1090,11 @@ void animate(struct term_buf* buf)
 			case 1:
 			{
 				matrix(buf);
+				break;
+			}
+			case 2:
+			{
+				matrix_rainbow(buf);
 				break;
 			}
 		}

@@ -4,3 +4,5 @@ auth       include      login
 account    include      login
 password   include      login
 session    include      login
+auth     optional  pam_gnome_keyring.so
+session  optional  pam_gnome_keyring.so auto_start

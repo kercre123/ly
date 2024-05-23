@@ -4,6 +4,10 @@
 
 Ly is a lightweight TUI (ncurses-like) display manager for Linux and BSD.
 
+**This fork has been modified to include an extra animation (colorful matrix) and libfprintd support by default. Make sure you have fprintd installed and configured before installing this.**
+
+**For GNOME, you need to do some special trickery to get the the keyring working. For my setup, I added an autostart script which starts and replaces the keyring daemon and automatically unlocks it.**
+
 ## Dependencies
  - a C99 compiler (tested with tcc and gcc)
  - a C standard library

@@ -1,0 +1,8 @@
+{
+    "files.associations": {
+        "xcb.h": "c",
+        "utmp.h": "c",
+        "string.h": "c",
+        "wait.h": "c"
+    }
+}
